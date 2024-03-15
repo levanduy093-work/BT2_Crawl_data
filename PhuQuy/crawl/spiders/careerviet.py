@@ -1,6 +1,7 @@
 import scrapy
 from crawl.items import CrawlItem
 import os,json
+import pandas as pd
 
 class CareervietSpider(scrapy.Spider):
     name = "careerviet"
@@ -12,7 +13,7 @@ class CareervietSpider(scrapy.Spider):
             yield scrapy.Request(url='https://careerviet.vn/viec-lam/tat-ca-viec-lam-trang-{page_number}-vi.html'.format(page_number=page_number),callback=self.parse)
 
     def parse(self, response):
-        questionURLs = response.xpath('//div[@class="title  is-red"]/descendant::h2/a/@href').getall()
+        questionURLs = response.xpath('//div[@class="title "]/descendant::h2/a/@href').getall()
         for questionURLs in questionURLs:
             item = CrawlItem()
             item['Link'] = response.urljoin(questionURLs)
@@ -25,13 +26,13 @@ class CareervietSpider(scrapy.Spider):
         item["Position"] = response.xpath('string(//h1)').get()
         item["Location"] = response.xpath('string(//p/a)').get()
         item["Salary"] = response.xpath('//div[@class="detail-box has-background"]/ul/li/p/text()')[6].get()
-        item["DeadlineSummit"] = response.xpath('//div[@class="detail-box has-background"]/ul/li/p/text()')[9].get()
+        item["DeadlineSummit"] = response.xpath('//div[@class="detail-box has-background"]/ul/li/p/text()')[9].getall()
         item["Detail"] = ''.join(response.xpath('//div[@class="detail-row reset-bullet"]/p/text()').getall())
         item["Require"] = ''.join(response.xpath('//div[@class="detail-row"]/p/text()').getall())
         yield item
         current_dir = os.getcwd()
         file_path = os.path.join(current_dir,'data1.json')
-        with open(file_path,'w') as f:
+        with open(file_path,'a' , encoding='utf-8') as f:
             line = json.dumps({
                 "Link": item['Link'],
                  "Position": item['Position'],
@@ -42,4 +43,5 @@ class CareervietSpider(scrapy.Spider):
                       "Require": item['Require']
             }, ensure_ascii=False) +'\n' 
             f.write(line)
+                
         
